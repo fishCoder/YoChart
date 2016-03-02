@@ -216,7 +216,13 @@ public class LineChart extends Chart {
             if(timer != null){
                 timer.cancel();
             }
-            final float v = -velocityX/16;
+            if(velocityX > 4000){
+                velocityX = 4000;
+            }else
+            if(velocityX < -4000){
+                velocityX = -4000;
+            }
+            final float v = -velocityX/10;
             runTime = 0;
             totalTime = Math.abs(v/a);
             startPosition = fScreenCurrentPosition;
