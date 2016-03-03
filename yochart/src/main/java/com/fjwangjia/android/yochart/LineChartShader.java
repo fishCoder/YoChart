@@ -20,6 +20,8 @@ public class LineChartShader implements ChartShader {
     List<PointF[]> mPoints;
     List<Integer> mColors;
 
+
+    int mFillColor = Color.WHITE;
     float iSpace = 10f;
     float mRadius = 5f;
     float mPaintWidth = 0f;
@@ -75,7 +77,7 @@ public class LineChartShader implements ChartShader {
             for (int k=0;k<pointFs.length;k++){
                 Paint paint = new Paint();
                 paint.setAntiAlias(true);
-                paint.setColor(Color.WHITE);
+                paint.setColor(mFillColor);
                 paint.setStyle(Paint.Style.FILL);
                 chartCanvas.drawCircle(pointFs[k].x,pointFs[k].y,mRadius - mPaintWidth/2,paint);
             }

@@ -3,7 +3,9 @@ package com.fjwangjia.android.yochart;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.util.AttributeSet;
@@ -67,29 +69,35 @@ public class LineChart extends Chart {
 
     public LineChart(Context context) {
         super(context);
-        init(context);
+        init(context,null);
     }
 
     public LineChart(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context);
+        init(context,attrs);
     }
 
     public LineChart(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context);
+        init(context,attrs);
     }
 
     @TargetApi(21)
     public LineChart(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        init(context);
+        init(context,attrs);
     }
 
-    void init(Context context){
+    void init(Context context,AttributeSet attrs){
         lineChartShader = new LineChartShader(Utils.dpTopxF(getContext(), 1.5f),Utils.dpTopxF(getContext(),3f));
         gestureDetector = new GestureDetector(context,simpleOnGestureListener);
         coordinateSystemsShader = new CoordinateSystemsShader(Utils.dpTopx(context,10),Utils.dpTopx(context,14),Utils.dpTopx(context,10));
+
+        if(attrs != null){
+            TypedArray typedArray = context.obtainStyledAttributes(attrs,R.styleable.LineChart);
+            int fillColor = typedArray.getColor(R.styleable.LineChart_fillColor, Color.WHITE);
+            lineChartShader.mFillColor =  fillColor;
+        }
     }
 
     public void createCoordinationSystem(int screenCountX_Axis,String[] contentX_Axis,int screenCountY_Axis,String[] contentY_Axis){
