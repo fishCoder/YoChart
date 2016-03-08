@@ -6,13 +6,17 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
+import java.security.cert.PolicyNode;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -35,12 +39,17 @@ public class LineChart extends Chart {
     int mTotalCountX = 0;
     String[] mContentX_Axis;
     String[] mContentY_Axis;
-
+    int mStartIndex = 0;
     List<Line> mLines = new ArrayList<>();
+
+    long showToastTime = 0;
+
+    List<Toast> toastList = new ArrayList<>();
 
     static public class Line{
 
         List<Float> mRateY_Axis = new ArrayList<>();
+
         int mColor;
         public Line(int color){
             mColor = color;
@@ -65,6 +74,21 @@ public class LineChart extends Chart {
         public int getColor(){
             return mColor;
         }
+
+        OnPointClickListener listener;
+
+        public void setListener(OnPointClickListener listener) {
+            this.listener = listener;
+        }
+    }
+
+    public interface OnPointClickListener{
+        /**
+         *
+         * @param which 哪条折线
+         * @param index 第几个点
+         */
+        void onPointClick(int which,int index);
     }
 
     public LineChart(Context context) {
@@ -96,7 +120,11 @@ public class LineChart extends Chart {
         if(attrs != null){
             TypedArray typedArray = context.obtainStyledAttributes(attrs,R.styleable.LineChart);
             int fillColor = typedArray.getColor(R.styleable.LineChart_fillColor, Color.WHITE);
+            int lineColor = typedArray.getColor(R.styleable.LineChart_lineColor,Color.BLACK);
+            int textColor = typedArray.getColor(R.styleable.LineChart_textColor,Color.BLACK);
             lineChartShader.mFillColor =  fillColor;
+            coordinateSystemsShader.mLineColor = lineColor;
+            coordinateSystemsShader.setTextColor(textColor);
         }
     }
 
@@ -146,13 +174,13 @@ public class LineChart extends Chart {
         float fScreenCurrentStartPos = fScreenCurrentPosition - screenWidth;
 
         float startRate = fScreenCurrentStartPos / fUnitXLength;
-        int startIndex = (int) Math.floor(fScreenCurrentStartPos / fUnitXLength);
-        float offsetX = startIndex*fUnitXLength - fScreenCurrentStartPos;
+        mStartIndex = (int) Math.floor(fScreenCurrentStartPos / fUnitXLength);
+        float offsetX = mStartIndex*fUnitXLength - fScreenCurrentStartPos;
         coordinateSystemsShader.setContents(mContentX_Axis,mContentY_Axis);
-        coordinateSystemsShader.drawData(startIndex,mScreenCountX_Axis , offsetX);
+        coordinateSystemsShader.drawData(mStartIndex,mScreenCountX_Axis , offsetX);
         coordinateSystemsShader.shader(canvas);
 
-        int endIndex = startIndex+mScreenCountX_Axis;
+        int endIndex = mStartIndex+mScreenCountX_Axis;
         if(endIndex<mTotalCountX){
             endIndex++;
         }
@@ -162,20 +190,28 @@ public class LineChart extends Chart {
         List<PointF[]> pointFList = new ArrayList<>();
         List<Integer>  colorList = new ArrayList<>();
         for (Line line : mLines){
-            PointF[] pointFs = new PointF[endIndex-startIndex];
-            for (int i=startIndex;i<endIndex;i++){
+            PointF[] pointFs = new PointF[endIndex-mStartIndex];
+            for (int i=mStartIndex;i<endIndex;i++){
                 PointF pointF = new PointF();
                 pointF.y = screenHeight*(1-line.getRateYAxis(i));
-                pointF.x = (i-startIndex)*fUnitXLength + offsetX;
-                pointFs[i-startIndex] = pointF;
+                pointF.x = (i-mStartIndex)*fUnitXLength + offsetX;
+                pointFs[i-mStartIndex] = pointF;
+
             }
             pointFList.add(pointFs);
             colorList.add(line.getColor());
         }
 
 
+
         lineChartShader.setPoint(pointFList,colorList);
         lineChartShader.shader(canvas);
+
+        for(Toast toast : toastList){
+            if(toast.index-mStartIndex<0||toast.index-mStartIndex>=mScreenCountX_Axis)continue;
+            PointF pointF = lineChartShader.getFixedPoint(toast.lineIndex,toast.index-mStartIndex);
+            toast.draw(pointF,canvas);
+        }
     }
 
     float lastX;
@@ -211,11 +247,20 @@ public class LineChart extends Chart {
         return true;
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if(toastTimer != null){
+            toastTimer.cancel();
+        }
+    }
+
     Timer timer;
+    Timer toastTimer;
     GestureDetector.SimpleOnGestureListener simpleOnGestureListener = new GestureDetector.SimpleOnGestureListener(){
 
         float runTime = 0;
-        int frameTime = 20;
+        int frameTime = 15;
         float totalTime = 0;
         float a = 0.5f;
         float startPosition;
@@ -224,13 +269,14 @@ public class LineChart extends Chart {
             if(timer != null){
                 timer.cancel();
             }
-            if(velocityX > 4000){
-                velocityX = 4000;
+            int threshold = 6000;
+            if(velocityX > threshold){
+                velocityX = threshold;
             }else
-            if(velocityX < -4000){
-                velocityX = -4000;
+            if(velocityX < - threshold){
+                velocityX = - threshold;
             }
-            final float v = -velocityX/10;
+            final float v = -velocityX/12;
             runTime = 0;
             totalTime = Math.abs(v/a);
             startPosition = fScreenCurrentPosition;
@@ -241,33 +287,96 @@ public class LineChart extends Chart {
                     ((Activity) getContext()).runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if(v>0){
+                            if (v > 0) {
                                 a = -a;
-                            }else {
+                            } else {
 
                             }
-                            if(runTime + frameTime > totalTime){
-                                fScreenCurrentPosition = startPosition + Utils.decelerate(v,a,totalTime/1000);
+                            if (runTime + frameTime > totalTime) {
+                                fScreenCurrentPosition = startPosition + Utils.decelerate(v, a, totalTime / 1000);
                                 timer.cancel();
-                            }else {
+                            } else {
                                 runTime += frameTime;
-                                fScreenCurrentPosition = startPosition + Utils.decelerate(v,a,runTime/1000);
+                                fScreenCurrentPosition = startPosition + Utils.decelerate(v, a, runTime / 1000);
                             }
 
-                            if(fScreenCurrentPosition  < fScreenWidth){
+                            if (fScreenCurrentPosition < fScreenWidth) {
                                 fScreenCurrentPosition = fScreenWidth;
                                 timer.cancel();
-                            }else  if(fScreenCurrentPosition > fTotalChartLength){
+                            } else if (fScreenCurrentPosition > fTotalChartLength) {
                                 fScreenCurrentPosition = fTotalChartLength;
                                 timer.cancel();
-                             }
+                            }
                             invalidate();
                         }
                     });
                 }
-            },frameTime,frameTime);
-            invalidate();
+            }, frameTime, frameTime);
             return super.onFling(e1, e2, velocityX, velocityY);
+        }
+
+
+
+        //点击一下
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            float iMinDistance = Utils.dpTopxF(getContext(),3f)*5;
+            int lineIndex = -1;
+            int index = -1;
+            PointF pointF  = new PointF();
+            for (int loop=0;loop<mLines.size();loop++){
+                Line line = mLines.get(loop);
+                if(line.listener != null){
+                    for (int i=0;i<mScreenCountX_Axis ; i++){
+                        PointF  returnPointF  = new PointF();
+                        float distance = lineChartShader.testLoaction(loop,i,new PointF(e.getX(),e.getY()));
+                        if(iMinDistance>=distance){
+                            lineIndex = loop;
+                            index = i+mStartIndex;
+                            iMinDistance = distance;
+                        }
+                    }
+                }
+            }
+
+            if(index!=-1 && lineIndex!=-1){
+                mLines.get(lineIndex).listener.onPointClick(lineIndex,index);
+                RectF rectF = coordinateSystemsShader.calculateChartCanvasRect();
+                String content = mContentX_Axis[index]+":"+mLines.get(lineIndex).mRateY_Axis.get(index);
+                Toast toast = new Toast(content,rectF,Utils.dpTopx(getContext(),13),Color.WHITE,0xFFEBD33A);
+                toast.lineIndex = lineIndex;
+                toast.index = index;
+
+                toastList.add(toast);
+
+                if(toastTimer == null){
+                    toastTimer = new Timer();
+                    toastTimer.schedule(new TimerTask(){
+                        @Override
+                        public void run() {
+                            if (toastList.size() == 0){
+                                return;
+                            }
+
+                            Iterator<Toast> iterator = toastList.iterator();
+                            while (iterator.hasNext()){
+                                Toast t = iterator.next();
+                                if(System.currentTimeMillis() - t.startShowTime > 1000){
+                                    iterator.remove();
+                                }
+                            }
+
+                            ((Activity) getContext()).runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    invalidate();
+                                }
+                            });
+                        }
+                    },50,50);
+                }
+            }
+            return super.onSingleTapUp(e);
         }
     };
 }

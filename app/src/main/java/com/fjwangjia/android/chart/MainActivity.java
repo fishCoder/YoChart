@@ -4,8 +4,10 @@ import android.graphics.Color;
 import android.graphics.PointF;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.fjwangjia.android.yochart.LineChart;
+import com.fjwangjia.android.yochart.Toast;
 
 public class MainActivity extends AppCompatActivity  {
 
@@ -16,13 +18,19 @@ public class MainActivity extends AppCompatActivity  {
         setContentView(R.layout.activity_main);
 
         lineChart = (LineChart) findViewById(R.id.line_chart);
-        lineChart.createCoordinationSystem(5,x,5,y);
+        lineChart.createCoordinationSystem(5, x, 5, y);
         LineChart.Line line1 = new LineChart.Line(Color.BLACK);
         line1.setRate(point);
         LineChart.Line line2 = new LineChart.Line(Color.RED);
         line2.setRate(point1);
         LineChart.Line line3 = new LineChart.Line(Color.GREEN);
         line3.setRate(point2);
+        line3.setListener(new LineChart.OnPointClickListener() {
+            @Override
+            public void onPointClick(int which, int index) {
+                Log.d("onPointClick",String.format("which:%d,index:%d",which,index));
+            }
+        });
         lineChart.addLine(line1);
         lineChart.addLine(line2);
         lineChart.addLine(line3);

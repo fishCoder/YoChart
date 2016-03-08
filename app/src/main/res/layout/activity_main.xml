@@ -14,5 +14,7 @@
         android:id="@+id/line_chart"
         android:layout_width="match_parent"
         app:fillColor="@android:color/white"
+        app:textColor="#904020"
+        app:lineColor="#99AAF0"
         android:layout_height="200dp"/>
 </RelativeLayout>

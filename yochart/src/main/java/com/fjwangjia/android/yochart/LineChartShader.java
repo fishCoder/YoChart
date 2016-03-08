@@ -1,5 +1,6 @@
 package com.fjwangjia.android.yochart;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -22,6 +23,7 @@ public class LineChartShader implements ChartShader {
 
 
     int mFillColor = Color.WHITE;
+
     float iSpace = 10f;
     float mRadius = 5f;
     float mPaintWidth = 0f;
@@ -49,6 +51,20 @@ public class LineChartShader implements ChartShader {
             }
         }
         mColors = colors;
+    }
+
+    public float testLoaction(int line_index,int index,PointF pointF){
+        PointF point = mPoints.get(line_index)[index];
+        PointF fixedPoint = new PointF();
+        fixedPoint.x = point.x+drawRect.left;
+        fixedPoint.y = point.y+drawRect.top;
+        return (float)Utils.distance(fixedPoint,pointF);
+    }
+
+
+    public PointF getFixedPoint(int lineIndex,int index){
+        PointF point = mPoints.get(lineIndex)[index];
+        return new PointF(point.x+drawRect.left,point.y+drawRect.top);
     }
 
     @Override

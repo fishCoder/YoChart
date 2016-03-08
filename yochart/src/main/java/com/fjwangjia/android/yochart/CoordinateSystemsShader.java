@@ -25,7 +25,8 @@ public class CoordinateSystemsShader implements ChartShader {
 
     float mOffsetX;
     float mOffsetY;
-
+    int mLineColor;
+    int mTextColor;
     int iScreenTotalX = 4;
     public CoordinateSystemsShader(int sizeX,int sizeY,int space){
         mPaintY.setTextSize(sizeY);
@@ -45,6 +46,12 @@ public class CoordinateSystemsShader implements ChartShader {
 
     }
 
+
+    public void setTextColor(int textColor){
+        mTextColor = textColor;
+        mPaintY.setColor(mTextColor);
+        mPaintX.setColor(mTextColor);
+    }
     /**
      *
      * @param startIndex  起始坐标
@@ -88,7 +95,7 @@ public class CoordinateSystemsShader implements ChartShader {
 
         Paint linePaint = new Paint();
         linePaint.setStyle(Paint.Style.STROKE);
-        linePaint.setColor(Color.BLACK);
+        linePaint.setColor(mLineColor);
         for (int i=0;i<ylinesCount;i++){
             float baseLineY = screenRect.bottom - perYlength * i;
             Path path = new Path();
