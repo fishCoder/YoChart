@@ -39,6 +39,7 @@ public class LineChart extends Chart {
     int mTotalCountX = 0;
     String[] mContentX_Axis;
     String[] mContentY_Axis;
+    String[] mContentY;
     int mStartIndex = 0;
     List<Line> mLines = new ArrayList<>();
 
@@ -93,7 +94,17 @@ public class LineChart extends Chart {
 
     public LineChart(Context context) {
         super(context);
-        init(context,null);
+        init(context, null);
+    }
+
+    public void draw(){
+        requestLayout();
+        invalidate();
+    }
+
+    public void clear(){
+        mLines.clear();
+        fScreenCurrentPosition = -1;
     }
 
     public LineChart(Context context, AttributeSet attrs) {
@@ -121,19 +132,28 @@ public class LineChart extends Chart {
             TypedArray typedArray = context.obtainStyledAttributes(attrs,R.styleable.LineChart);
             int fillColor = typedArray.getColor(R.styleable.LineChart_fillColor, Color.WHITE);
             int lineColor = typedArray.getColor(R.styleable.LineChart_lineColor,Color.BLACK);
-            int textColor = typedArray.getColor(R.styleable.LineChart_textColor,Color.BLACK);
+            int textColor = typedArray.getColor(R.styleable.LineChart_fontColor,Color.BLACK);
             lineChartShader.mFillColor =  fillColor;
             coordinateSystemsShader.mLineColor = lineColor;
             coordinateSystemsShader.setTextColor(textColor);
         }
     }
 
-    public void createCoordinationSystem(int screenCountX_Axis,String[] contentX_Axis,int screenCountY_Axis,String[] contentY_Axis){
+    public void createCoordinationSystem(int screenCountX_Axis,String[] contentX_Axis,int screenCountY_Axis,String[] contentY_Axis,String[] yContent){
         mScreenCountX_Axis = screenCountX_Axis;
         mScreenCountY_Axis = screenCountY_Axis;
         mTotalCountX = contentX_Axis.length;
         mContentX_Axis = contentX_Axis;
         mContentY_Axis = contentY_Axis;
+        mContentY = yContent;
+
+        if(mTotalCountX<screenCountX_Axis){
+            mScreenCountX_Axis = mTotalCountX;
+        }
+
+        if(mScreenCountY_Axis>mContentY.length-1){
+            mScreenCountY_Axis = mContentY.length-1;
+        }
     }
 
     public void setLines(List<Line> lines){
@@ -157,7 +177,7 @@ public class LineChart extends Chart {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if(lineChartShader == null)return;
+        if(lineChartShader == null || mLines.size()==0)return;
         RectF screenChartRect = coordinateSystemsShader.calculateChartCanvasRect();
         float screenWidth = screenChartRect.width();
         float screenHeight = screenChartRect.height();
@@ -216,6 +236,8 @@ public class LineChart extends Chart {
 
     float lastX;
     float fScreenLastPosition = 0;
+
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()){
@@ -342,7 +364,7 @@ public class LineChart extends Chart {
             if(index!=-1 && lineIndex!=-1){
                 mLines.get(lineIndex).listener.onPointClick(lineIndex,index);
                 RectF rectF = coordinateSystemsShader.calculateChartCanvasRect();
-                String content = mContentX_Axis[index]+":"+mLines.get(lineIndex).mRateY_Axis.get(index);
+                String content = mContentX_Axis[index]+":"+mContentY[index];
                 Toast toast = new Toast(content,rectF,Utils.dpTopx(getContext(),13),Color.WHITE,0xFFEBD33A);
                 toast.lineIndex = lineIndex;
                 toast.index = index;

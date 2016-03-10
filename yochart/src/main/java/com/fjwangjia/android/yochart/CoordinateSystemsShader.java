@@ -73,18 +73,20 @@ public class CoordinateSystemsShader implements ChartShader {
 
 
         Rect rectX = new Rect();
-        String content = "8888-88-88";
+        String content = "8888年上半年";
         mPaintX.getTextBounds(content,0,content.length(),rectX);
 
         RectF rectF = new RectF(drawRect.left+iSpace+rectX.width()/2,
                                 drawRect.top+iSpace,
                                 drawRect.right-iSpace-rectX.width()/2,
-                                drawRect.bottom-iSpace-rectX.height());
+                                drawRect.bottom-3*iSpace-rectX.height());
         return rectF;
     }
 
     @Override
     public void shader(Canvas canvas) {
+        if(mContentsY == null && mContentsX ==null){return;}
+
         RectF screenRect = calculateChartCanvasRect();
 
         int ylinesCount = mContentsY.length;
@@ -107,7 +109,7 @@ public class CoordinateSystemsShader implements ChartShader {
             mPaintY.getTextBounds(mContentsY[i],0,mContentsY[i].length(),fontRect);
             canvas.drawText(mContentsY[i],
                     screenRect.left - fontRect.width() - iSpace,
-                    baseLineY  + fontRect.height() / 2,
+                    baseLineY  + fontRect.height()/2 ,
                     mPaintY);
 
             if(i==0){

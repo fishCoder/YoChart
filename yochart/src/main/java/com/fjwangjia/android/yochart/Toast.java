@@ -47,6 +47,7 @@ public class Toast {
 
         startShowTime = System.currentTimeMillis();
 
+        fSpace = textSize/4;
         this.rect = rect;
     }
 
@@ -74,9 +75,9 @@ public class Toast {
 
 //        canvas.drawRect(drawRect, paint);
         canvas.drawRoundRect(new RectF(
-                            drawPoint.x-fSpace*2,
-                            drawPoint.y-fSpace*3,
-                            drawPoint.x+mWidth+fSpace*2,
+                            drawPoint.x-fSpace*3,
+                            drawPoint.y-fSpace*5,
+                            drawPoint.x+mWidth+fSpace*3,
                             drawPoint.y+mHeight-fSpace), 8f, 8f, paint);
         canvas.drawText(mContent,drawPoint.x,drawPoint.y,mPaint);
     }
