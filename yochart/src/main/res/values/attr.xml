@@ -4,5 +4,6 @@
         <attr name="fillColor" format="color" />
         <attr name="lineColor" format="color" />
         <attr name="fontColor" format="color" />
+        <attr name="toast_time" format="integer"/>
     </declare-styleable>
 </resources>

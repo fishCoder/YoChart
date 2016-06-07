@@ -37,6 +37,7 @@ public class LineChart extends Chart {
     int mScreenCountX_Axis = 5;
     int mScreenCountY_Axis = 6;
     int mTotalCountX = 0;
+    int mToastTime = 5000;
     String[] mContentX_Axis;
     String[] mContentY_Axis;
     String[] mContentY;
@@ -133,6 +134,7 @@ public class LineChart extends Chart {
             int fillColor = typedArray.getColor(R.styleable.LineChart_fillColor, Color.WHITE);
             int lineColor = typedArray.getColor(R.styleable.LineChart_lineColor,Color.BLACK);
             int textColor = typedArray.getColor(R.styleable.LineChart_fontColor,Color.BLACK);
+            mToastTime = typedArray.getInteger(R.styleable.LineChart_toast_time,5000);
             lineChartShader.mFillColor =  fillColor;
             coordinateSystemsShader.mLineColor = lineColor;
             coordinateSystemsShader.setTextColor(textColor);
@@ -383,7 +385,7 @@ public class LineChart extends Chart {
                             Iterator<Toast> iterator = toastList.iterator();
                             while (iterator.hasNext()){
                                 Toast t = iterator.next();
-                                if(System.currentTimeMillis() - t.startShowTime > 1000){
+                                if(System.currentTimeMillis() - t.startShowTime > mToastTime){
                                     iterator.remove();
                                 }
                             }
