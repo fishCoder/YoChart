@@ -31,8 +31,9 @@ public class MainActivity extends AppCompatActivity  {
                 line3.setRate(point2);
                 line3.setListener(new LineChart.OnPointClickListener() {
                     @Override
-                    public void onPointClick(int which, int index) {
+                    public String onPointClick(int which, int index) {
                         Log.d("onPointClick",String.format("which:%d,index:%d",which,index));
+                        return "";
                     }
                 });
                 lineChart.addLine(line1);

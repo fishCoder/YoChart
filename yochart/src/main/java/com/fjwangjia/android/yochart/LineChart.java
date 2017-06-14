@@ -90,7 +90,7 @@ public class LineChart extends Chart {
          * @param which 哪条折线
          * @param index 第几个点
          */
-        void onPointClick(int which,int index);
+        String onPointClick(int which,int index);
     }
 
     public LineChart(Context context) {
@@ -157,6 +157,21 @@ public class LineChart extends Chart {
             mScreenCountY_Axis = mContentY.length-1;
         }
     }
+
+    public void setXIndex(int index){
+        RectF screenChartRect = coordinateSystemsShader.calculateChartCanvasRect();
+        float screenWidth = screenChartRect.width();
+
+        float fUnitXLength = screenWidth/(mScreenCountX_Axis-1);
+
+        float indexLength = fUnitXLength * index;
+
+        fScreenCurrentPosition = indexLength < screenWidth ? screenWidth : indexLength;
+
+        invalidate();
+
+    }
+
 
     public void setLines(List<Line> lines){
         mLines = lines;
@@ -364,9 +379,8 @@ public class LineChart extends Chart {
             }
 
             if(index!=-1 && lineIndex!=-1){
-                mLines.get(lineIndex).listener.onPointClick(lineIndex,index);
+                String content = mLines.get(lineIndex).listener.onPointClick(lineIndex,index);
                 RectF rectF = coordinateSystemsShader.calculateChartCanvasRect();
-                String content = mContentX_Axis[index]+":"+mContentY[index];
                 Toast toast = new Toast(content,rectF,Utils.dpTopx(getContext(),13),Color.WHITE,0xFFEBD33A);
                 toast.lineIndex = lineIndex;
                 toast.index = index;
